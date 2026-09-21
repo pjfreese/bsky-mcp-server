@@ -123,8 +123,6 @@ server.tool(
         return mcpErrorResponse("Not connected to Bluesky. Check your environment variables.");
       }
 
-      const MAX_TOTAL_POSTS = 500; // Safety limit to prevent excessive API calls
-      
       let allPosts: any[] = [];
       let nextCursor: string | undefined = undefined;
       let shouldContinueFetching = true;
@@ -133,6 +131,12 @@ server.tool(
       const useHoursLimit = type === "hours";
       const targetHours = count;
       const targetDate = new Date(Date.now() - targetHours * 60 * 60 * 1000);
+      
+      // Safety ceiling on posts held in memory / API calls made.
+      // posts mode never needs more than `count`; hours mode pages until it
+      // crosses targetDate, so its cap must sit well above 500 — but stay finite
+      // to bound memory and API load on the 512 MB host.
+      const MAX_TOTAL_POSTS = useHoursLimit ? 2000 : 500;
       
       while (shouldContinueFetching && allPosts.length < MAX_TOTAL_POSTS) {
         // Calculate how many posts to fetch in this batch
@@ -855,8 +859,6 @@ server.tool(
         return mcpErrorResponse(`Invalid feed URI or feed not found: ${feed}.`);
       }
 
-      const MAX_TOTAL_POSTS = 500; // Safety limit to prevent excessive API calls
-      
       let allPosts: any[] = [];
       let nextCursor: string | undefined = undefined;
       let shouldContinueFetching = true;
@@ -866,6 +868,12 @@ server.tool(
       const targetHours = count;
       const targetDate = new Date(Date.now() - targetHours * 60 * 60 * 1000);
       
+      // Safety ceiling on posts held in memory / API calls made.
+      // posts mode never needs more than `count`; hours mode pages until it
+      // crosses targetDate, so its cap must sit well above 500 — but stay finite
+      // to bound memory and API load on the 512 MB host.
+      const MAX_TOTAL_POSTS = useHoursLimit ? 2000 : 500;
+
       while (shouldContinueFetching && allPosts.length < MAX_TOTAL_POSTS) {
         // Calculate how many posts to fetch in this batch
         const batchLimit = 100;
